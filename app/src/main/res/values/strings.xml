@@ -1,0 +1,8 @@
+<resources>
+    <string name="app_name">uTV Remote Receiver</string>
+    <string name="button_status_off">Start</string>
+    <string name="button_status_on">Stop</string>
+    <string name="ip_address_label">IP Address:</string>
+    <string name="port_no_label">Port No:</string>
+    <string name="default_port">8080</string>
+</resources>
