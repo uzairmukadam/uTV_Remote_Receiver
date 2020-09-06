@@ -105,20 +105,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performSystemInput(String input) {
-        switch (input) {
-            case "BTN_HOME":
-                PackageManager localPackageManager = getPackageManager();
-                String str = localPackageManager.resolveActivity(new Intent("android.intent.action.MAIN").addCategory("android.intent.category.HOME"),
-                        PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
-                Intent appIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(str);
-                getApplicationContext().startActivity(appIntent);
-                break;
-            case "BTN_PWR":
-                Toast.makeText(getApplicationContext(), "SCREEN ACTIVITY", Toast.LENGTH_SHORT).show();
-                break;
-            case "BTN_MUTE":
-                Toast.makeText(getApplicationContext(), "VOLUME ACTIVITY", Toast.LENGTH_SHORT).show();
-                break;
+        try{
+            switch (input) {
+                case "BTN_HOME":
+                    PackageManager localPackageManager = getPackageManager();
+                    String str = localPackageManager.resolveActivity(new Intent("android.intent.action.MAIN").addCategory("android.intent.category.HOME"),
+                            PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+                    Intent appIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(str);
+                    getApplicationContext().startActivity(appIntent);
+                    break;
+                case "BTN_PWR":
+                    Toast.makeText(getApplicationContext(), "SCREEN ACTIVITY", Toast.LENGTH_SHORT).show();
+                    break;
+                case "BTN_MUTE":
+                    Toast.makeText(getApplicationContext(), "VOLUME ACTIVITY", Toast.LENGTH_SHORT).show();
+                    break;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
         }
     }
 
