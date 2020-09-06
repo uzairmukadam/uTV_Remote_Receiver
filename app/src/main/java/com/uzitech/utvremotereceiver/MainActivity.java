@@ -1,6 +1,7 @@
 package com.uzitech.utvremotereceiver;
 
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -89,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     private void loadSystemInputs() {
         systemInput.add("BTN_PWR");
         systemInput.add("BTN_MUTE");
+        systemInput.add("BTN_HOME");
     }
 
     void broadcastFunction(String input) {
@@ -97,6 +99,26 @@ public class MainActivity extends AppCompatActivity {
             intent.setAction("utv.uzitech.remote_input");
             intent.putExtra("Remote_Input", input);
             sendBroadcast(intent);
+        } else {
+            performSystemInput(input);
+        }
+    }
+
+    private void performSystemInput(String input) {
+        switch (input) {
+            case "BTN_HOME":
+                PackageManager localPackageManager = getPackageManager();
+                String str = localPackageManager.resolveActivity(new Intent("android.intent.action.MAIN").addCategory("android.intent.category.HOME"),
+                        PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
+                Intent appIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(str);
+                getApplicationContext().startActivity(appIntent);
+                break;
+            case "BTN_PWR":
+                Toast.makeText(getApplicationContext(), "SCREEN ACTIVITY", Toast.LENGTH_SHORT).show();
+                break;
+            case "BTN_MUTE":
+                Toast.makeText(getApplicationContext(), "VOLUME ACTIVITY", Toast.LENGTH_SHORT).show();
+                break;
         }
     }
 
@@ -233,5 +255,10 @@ public class MainActivity extends AppCompatActivity {
         } else {
             connection_status.setBackground(ContextCompat.getDrawable(getApplicationContext(), drawable));
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        this.moveTaskToBack(true);
     }
 }
