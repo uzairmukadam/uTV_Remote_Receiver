@@ -1,6 +1,8 @@
 package com.uzitech.utvremotereceiver;
 
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -46,11 +48,14 @@ public class MainActivity extends AppCompatActivity {
         connect = findViewById(R.id.connect_btn);
         final EditText port_no = findViewById(R.id.port_number);
 
+        final SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
+        if(preferences.contains("LastPort")){
+            port_no.setText(preferences.getString("LastPort", String.valueOf(R.string.default_port)));
+        }
+
         systemInput = new ArrayList<>();
 
         loadSystemInputs();
-
-        port_no.setText(R.string.default_port);
 
         serverThread = new Thread(new InitiateServer());
 
@@ -71,6 +76,9 @@ public class MainActivity extends AppCompatActivity {
                     } else {
                         port_no.setEnabled(false);
                         port = Integer.parseInt(port_no.getText().toString());
+                        SharedPreferences.Editor editor = preferences.edit();
+                        editor.putString("LastPort", String.valueOf(port));
+                        editor.apply();
                         serverThread.start();
                     }
                 } else {
