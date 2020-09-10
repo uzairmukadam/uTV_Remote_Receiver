@@ -1,7 +1,6 @@
 package com.uzitech.utvremotereceiver;
 
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Bundle;
 import android.view.View;
@@ -30,6 +29,8 @@ public class MainActivity extends AppCompatActivity {
 
     Button connect;
 
+    Thread serverThread;
+
     int port;
     String ip;
 
@@ -51,7 +52,7 @@ public class MainActivity extends AppCompatActivity {
 
         port_no.setText(R.string.default_port);
 
-        final Thread[] serverThread = {new Thread(new InitiateServer())};
+        serverThread = new Thread(new InitiateServer());
 
         setConnectionStatus();
         getIPAddress();
@@ -63,20 +64,20 @@ public class MainActivity extends AppCompatActivity {
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (serverSocket == null || serverSocket.isClosed()) {
+                if (serverSocket == null || !serverThread.isAlive()) {
                     if (port_no.getText().toString().isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Enter a port number", Toast.LENGTH_SHORT).show();
                         port_no.requestFocus();
                     } else {
                         port_no.setEnabled(false);
                         port = Integer.parseInt(port_no.getText().toString());
-                        serverThread[0].start();
+                        serverThread.start();
                     }
                 } else {
                     try {
                         port_no.setEnabled(true);
                         serverSocket.close();
-                        serverThread[0] = new Thread(new InitiateServer());
+                        serverThread = new Thread(new InitiateServer());
                         setConnectionStatus();
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -105,14 +106,13 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void performSystemInput(String input) {
-        try{
+        try {
             switch (input) {
                 case "BTN_HOME":
-                    PackageManager localPackageManager = getPackageManager();
-                    String str = localPackageManager.resolveActivity(new Intent("android.intent.action.MAIN").addCategory("android.intent.category.HOME"),
-                            PackageManager.MATCH_DEFAULT_ONLY).activityInfo.packageName;
-                    Intent appIntent = getApplicationContext().getPackageManager().getLaunchIntentForPackage(str);
-                    getApplicationContext().startActivity(appIntent);
+                    Intent startMain = new Intent(Intent.ACTION_MAIN);
+                    startMain.addCategory(Intent.CATEGORY_HOME);
+                    startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                    startActivity(startMain);
                     break;
                 case "BTN_PWR":
                     Toast.makeText(getApplicationContext(), "SCREEN ACTIVITY", Toast.LENGTH_SHORT).show();
@@ -121,7 +121,7 @@ public class MainActivity extends AppCompatActivity {
                     Toast.makeText(getApplicationContext(), "VOLUME ACTIVITY", Toast.LENGTH_SHORT).show();
                     break;
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             e.printStackTrace();
             Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
         }
@@ -247,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         final FrameLayout connection_status = findViewById(R.id.connection_status);
         int drawable;
 
-        if (serverSocket == null || serverSocket.isClosed()) {
+        if (serverSocket == null || !serverThread.isAlive()) {
             drawable = R.drawable.connection_off;
             connect.setText(R.string.button_status_off);
         } else {
