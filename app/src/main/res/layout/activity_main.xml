@@ -60,6 +60,7 @@
                 android:gravity="center_horizontal"
                 android:inputType="number"
                 android:theme="@style/value_style"
+                android:hint="@string/port_no_hint"
                 android:importantForAutofill="no" />
         </LinearLayout>
     </LinearLayout>
@@ -82,11 +83,4 @@
             android:background="@drawable/connection_button" />
     </FrameLayout>
 
-    <TextView
-        android:id="@+id/debug_box"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="DEBUG"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintStart_toStartOf="parent" />
 </androidx.constraintlayout.widget.ConstraintLayout>

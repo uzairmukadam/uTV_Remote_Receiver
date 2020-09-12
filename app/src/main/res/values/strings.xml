@@ -5,4 +5,5 @@
     <string name="ip_address_label">IP Address:</string>
     <string name="port_no_label">Port No:</string>
     <string name="default_port">8080</string>
+    <string name="port_no_hint">PORT NO.</string>
 </resources>

@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -27,18 +28,14 @@ import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity {
 
+    private static final String TAG = "uTV Receiver";
+
     ServerSocket serverSocket;
-
     Button connect;
-
     Thread serverThread;
-
     int port;
     String ip;
-
     ArrayList<String> systemInput;
-
-    TextView debug_textView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,28 +45,22 @@ public class MainActivity extends AppCompatActivity {
         connect = findViewById(R.id.connect_btn);
         final EditText port_no = findViewById(R.id.port_number);
 
+        getIPAddress();
+
         final SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
-        if(preferences.contains("LastPort")){
+        if (preferences.contains("LastPort")) {
             port_no.setText(preferences.getString("LastPort", String.valueOf(R.string.default_port)));
         }
 
-        systemInput = new ArrayList<>();
-
         loadSystemInputs();
-
         serverThread = new Thread(new InitiateServer());
-
         setConnectionStatus();
-        getIPAddress();
-
-        //debugging tools
-        debug_textView = findViewById(R.id.debug_box);
 
 
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (serverSocket == null || !serverThread.isAlive()) {
+                if (!serverThread.isAlive()) {
                     if (port_no.getText().toString().isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Enter a port number", Toast.LENGTH_SHORT).show();
                         port_no.requestFocus();
@@ -80,6 +71,9 @@ public class MainActivity extends AppCompatActivity {
                         editor.putString("LastPort", String.valueOf(port));
                         editor.apply();
                         serverThread.start();
+                        if(getIntent().hasExtra("Parent")){
+                            onBackPressed();
+                        }
                     }
                 } else {
                     try {
@@ -88,8 +82,7 @@ public class MainActivity extends AppCompatActivity {
                         serverThread = new Thread(new InitiateServer());
                         setConnectionStatus();
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        debug_textView.setText(e.toString());
+                        Log.d(TAG, e.toString());
                     }
                 }
             }
@@ -97,6 +90,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void loadSystemInputs() {
+        systemInput = new ArrayList<>();
         systemInput.add("BTN_PWR");
         systemInput.add("BTN_MUTE");
         systemInput.add("BTN_HOME");
@@ -135,6 +129,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    @SuppressWarnings("InfiniteLoopStatement")
     class InitiateServer extends Thread {
 
         String message;
@@ -151,7 +146,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void run() {
-                        debug_textView.setText("Receiver Ready");
+                        Log.d(TAG, "Receiver Ready");
                         setConnectionStatus();
                     }
                 });
@@ -173,7 +168,7 @@ public class MainActivity extends AppCompatActivity {
 
                         @Override
                         public void run() {
-                            debug_textView.setText(message);
+                            Log.d(TAG, message);
                             broadcastFunction(message);
                         }
                     });
@@ -188,7 +183,7 @@ public class MainActivity extends AppCompatActivity {
 
                     @Override
                     public void run() {
-                        debug_textView.setText(e.toString());
+                        Log.d(TAG, e.toString());
                     }
                 });
 
@@ -197,8 +192,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         socket.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        debug_textView.setText(e.toString());
+                        Log.d(TAG, e.toString());
                     }
                 }
 
@@ -206,8 +200,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         dataInputStream.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        debug_textView.setText(e.toString());
+                        Log.d(TAG, e.toString());
                     }
                 }
 
@@ -215,8 +208,7 @@ public class MainActivity extends AppCompatActivity {
                     try {
                         dataOutputStream.close();
                     } catch (IOException e) {
-                        e.printStackTrace();
-                        debug_textView.setText(e.toString());
+                        Log.d(TAG, e.toString());
                     }
                 }
             }
@@ -255,7 +247,7 @@ public class MainActivity extends AppCompatActivity {
         final FrameLayout connection_status = findViewById(R.id.connection_status);
         int drawable;
 
-        if (serverSocket == null || !serverThread.isAlive()) {
+        if (!serverThread.isAlive()) {
             drawable = R.drawable.connection_off;
             connect.setText(R.string.button_status_off);
         } else {
