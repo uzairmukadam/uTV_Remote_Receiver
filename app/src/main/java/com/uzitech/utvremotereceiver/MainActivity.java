@@ -71,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
                         editor.putString("LastPort", String.valueOf(port));
                         editor.apply();
                         serverThread.start();
-                        if(getIntent().hasExtra("Parent")){
+                        if (getIntent().hasExtra("Parent")) {
                             onBackPressed();
                         }
                     }
