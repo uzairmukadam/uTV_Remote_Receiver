@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
@@ -16,26 +15,15 @@ import android.widget.Toast;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity {
 
-    private static final String TAG = "uTV Receiver";
-
-    ServerSocket serverSocket;
+    SharedPreferences preferences;
     Button connect;
-    Thread serverThread;
-    int port;
-    String ip;
-    ArrayList<String> systemInput;
+    Intent serviceIntent;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,180 +32,40 @@ public class MainActivity extends AppCompatActivity {
 
         connect = findViewById(R.id.connect_btn);
         final EditText port_no = findViewById(R.id.port_number);
+        serviceIntent = new Intent(MainActivity.this, InputService.class);
 
         getIPAddress();
 
-        final SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
+        preferences = getSharedPreferences(String.valueOf(R.string.app_name), Context.MODE_PRIVATE);
         if (preferences.contains("LastPort")) {
             port_no.setText(preferences.getString("LastPort", String.valueOf(R.string.default_port)));
         }
-
-        loadSystemInputs();
-        serverThread = new Thread(new InitiateServer());
         setConnectionStatus();
-
 
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (!serverThread.isAlive()) {
+                if (true) {//if not running
                     if (port_no.getText().toString().isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Enter a port number", Toast.LENGTH_SHORT).show();
                         port_no.requestFocus();
                     } else {
                         port_no.setEnabled(false);
-                        port = Integer.parseInt(port_no.getText().toString());
+                        int port = Integer.parseInt(port_no.getText().toString());
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putString("LastPort", String.valueOf(port));
                         editor.apply();
-                        serverThread.start();
-                        if (getIntent().hasExtra("Parent")) {
-                            onBackPressed();
-                        }
-                    }
-                } else {
-                    try {
-                        port_no.setEnabled(true);
-                        serverSocket.close();
-                        serverThread = new Thread(new InitiateServer());
-                        setConnectionStatus();
-                    } catch (IOException e) {
-                        Log.d(TAG, e.toString());
+                        serviceIntent.putExtra("port_no", port);
+                        InputService.enqueueWork(MainActivity.this, serviceIntent);
                     }
                 }
             }
         });
     }
 
-    private void loadSystemInputs() {
-        systemInput = new ArrayList<>();
-        systemInput.add("BTN_PWR");
-        systemInput.add("BTN_MUTE");
-        systemInput.add("BTN_HOME");
-    }
-
-    void broadcastFunction(String input) {
-        if (!systemInput.contains(input)) {
-            Intent intent = new Intent();
-            intent.setAction("utv.uzitech.remote_input");
-            intent.putExtra("Remote_Input", input);
-            sendBroadcast(intent);
-        } else {
-            performSystemInput(input);
-        }
-    }
-
-    private void performSystemInput(String input) {
-        try {
-            switch (input) {
-                case "BTN_HOME":
-                    Intent startMain = new Intent(Intent.ACTION_MAIN);
-                    startMain.addCategory(Intent.CATEGORY_HOME);
-                    startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                    startActivity(startMain);
-                    break;
-                case "BTN_PWR":
-                    Toast.makeText(getApplicationContext(), "SCREEN ACTIVITY", Toast.LENGTH_SHORT).show();
-                    break;
-                case "BTN_MUTE":
-                    Toast.makeText(getApplicationContext(), "VOLUME ACTIVITY", Toast.LENGTH_SHORT).show();
-                    break;
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
-        }
-    }
-
-    @SuppressWarnings("InfiniteLoopStatement")
-    class InitiateServer extends Thread {
-
-        String message;
-
-        @Override
-        public void run() {
-            Socket socket = null;
-            DataInputStream dataInputStream = null;
-            DataOutputStream dataOutputStream = null;
-
-            try {
-                serverSocket = new ServerSocket(port);
-                MainActivity.this.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Log.d(TAG, "Receiver Ready");
-                        setConnectionStatus();
-                    }
-                });
-
-                while (true) {
-                    socket = serverSocket.accept();
-                    dataInputStream = new DataInputStream(
-                            socket.getInputStream());
-                    dataOutputStream = new DataOutputStream(
-                            socket.getOutputStream());
-
-                    final String messageFromClient;
-
-                    messageFromClient = dataInputStream.readUTF();
-
-                    message = messageFromClient;
-
-                    MainActivity.this.runOnUiThread(new Runnable() {
-
-                        @Override
-                        public void run() {
-                            Log.d(TAG, message);
-                            broadcastFunction(message);
-                        }
-                    });
-
-                    String msgReply = "Received";
-                    dataOutputStream.writeUTF(msgReply);
-
-                }
-            } catch (final IOException e) {
-                e.printStackTrace();
-                MainActivity.this.runOnUiThread(new Runnable() {
-
-                    @Override
-                    public void run() {
-                        Log.d(TAG, e.toString());
-                    }
-                });
-
-            } finally {
-                if (socket != null) {
-                    try {
-                        socket.close();
-                    } catch (IOException e) {
-                        Log.d(TAG, e.toString());
-                    }
-                }
-
-                if (dataInputStream != null) {
-                    try {
-                        dataInputStream.close();
-                    } catch (IOException e) {
-                        Log.d(TAG, e.toString());
-                    }
-                }
-
-                if (dataOutputStream != null) {
-                    try {
-                        dataOutputStream.close();
-                    } catch (IOException e) {
-                        Log.d(TAG, e.toString());
-                    }
-                }
-            }
-        }
-    }
-
     private void getIPAddress() {
         TextView ip_address = findViewById(R.id.ip_address);
-
+        String ip = null;
         try {
             Enumeration<NetworkInterface> enumNetworkInterfaces = NetworkInterface
                     .getNetworkInterfaces();
@@ -247,7 +95,7 @@ public class MainActivity extends AppCompatActivity {
         final FrameLayout connection_status = findViewById(R.id.connection_status);
         int drawable;
 
-        if (!serverThread.isAlive()) {
+        if (true) {//if not running
             drawable = R.drawable.connection_off;
             connect.setText(R.string.button_status_off);
         } else {
@@ -260,10 +108,5 @@ public class MainActivity extends AppCompatActivity {
         } else {
             connection_status.setBackground(ContextCompat.getDrawable(getApplicationContext(), drawable));
         }
-    }
-
-    @Override
-    public void onBackPressed() {
-        this.moveTaskToBack(true);
     }
 }
