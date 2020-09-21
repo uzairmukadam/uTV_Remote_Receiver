@@ -24,6 +24,7 @@ public class MainActivity extends AppCompatActivity {
     SharedPreferences preferences;
     Button connect;
     Intent serviceIntent;
+    static boolean isRunning = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
         connect.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (true) {//if not running
+                if (!isRunning) {
                     if (port_no.getText().toString().isEmpty()) {
                         Toast.makeText(getApplicationContext(), "Enter a port number", Toast.LENGTH_SHORT).show();
                         port_no.requestFocus();
@@ -57,8 +58,14 @@ public class MainActivity extends AppCompatActivity {
                         editor.apply();
                         serviceIntent.putExtra("port_no", port);
                         InputService.enqueueWork(MainActivity.this, serviceIntent);
+                        isRunning = true;
                     }
+                } else {
+                    port_no.setEnabled(true);
+                    getApplicationContext().stopService(serviceIntent);
+                    isRunning = false;
                 }
+                setConnectionStatus();
             }
         });
     }
@@ -95,7 +102,7 @@ public class MainActivity extends AppCompatActivity {
         final FrameLayout connection_status = findViewById(R.id.connection_status);
         int drawable;
 
-        if (true) {//if not running
+        if (!isRunning) {
             drawable = R.drawable.connection_off;
             connect.setText(R.string.button_status_off);
         } else {

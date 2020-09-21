@@ -120,10 +120,4 @@ public class InputService extends JobIntentService {
         }
     }
 
-
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d(TAG, "onDestroy");
-    }
 }
