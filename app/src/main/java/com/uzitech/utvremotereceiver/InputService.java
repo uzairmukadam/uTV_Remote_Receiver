@@ -2,7 +2,6 @@ package com.uzitech.utvremotereceiver;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -19,7 +18,6 @@ public class InputService extends JobIntentService {
 
     public static final String TAG = "InputService";
 
-    SharedPreferences preferences;
     ServerSocket serverSocket;
     ArrayList<String> systemInput;
 
@@ -31,7 +29,6 @@ public class InputService extends JobIntentService {
     public void onCreate() {
         super.onCreate();
         Log.d(TAG, "onCreate");
-        preferences = getSharedPreferences(String.valueOf(R.string.app_name), Context.MODE_PRIVATE);
         systemInput = new ArrayList<>();
         systemInput.add("BTN_PWR");
         systemInput.add("BTN_MUTE");
@@ -51,9 +48,6 @@ public class InputService extends JobIntentService {
         try {
             serverSocket = new ServerSocket(port);
             Log.d(TAG, "Receiver Ready");
-            SharedPreferences.Editor editor = preferences.edit();
-            editor.putBoolean("service_status", true);
-            editor.apply();
 
             while (MainActivity.isRunning) {
                 socket = serverSocket.accept();
@@ -101,7 +95,7 @@ public class InputService extends JobIntentService {
     }
 
     private void performInput(String input) {
-        if(MainActivity.isRunning){
+        if (MainActivity.isRunning) {
             if (!systemInput.contains(input)) {
                 Intent intent = new Intent();
                 intent.setAction("utv.uzitech.remote_input");

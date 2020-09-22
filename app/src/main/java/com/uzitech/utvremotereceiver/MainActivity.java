@@ -21,7 +21,6 @@ import java.util.Enumeration;
 
 public class MainActivity extends AppCompatActivity {
 
-    SharedPreferences preferences;
     EditText port_no;
     Button connect;
     Intent serviceIntent;
@@ -38,7 +37,7 @@ public class MainActivity extends AppCompatActivity {
 
         getIPAddress();
 
-        preferences = getSharedPreferences(String.valueOf(R.string.app_name), Context.MODE_PRIVATE);
+        final SharedPreferences preferences = getPreferences(Context.MODE_PRIVATE);
         if (preferences.contains("LastPort")) {
             port_no.setText(preferences.getString("LastPort", String.valueOf(R.string.default_port)));
         }
