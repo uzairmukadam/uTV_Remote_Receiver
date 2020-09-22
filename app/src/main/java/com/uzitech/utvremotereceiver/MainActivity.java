@@ -22,6 +22,7 @@ import java.util.Enumeration;
 public class MainActivity extends AppCompatActivity {
 
     SharedPreferences preferences;
+    EditText port_no;
     Button connect;
     Intent serviceIntent;
     static boolean isRunning = false;
@@ -31,8 +32,8 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        port_no = findViewById(R.id.port_number);
         connect = findViewById(R.id.connect_btn);
-        final EditText port_no = findViewById(R.id.port_number);
         serviceIntent = new Intent(MainActivity.this, InputService.class);
 
         getIPAddress();
@@ -51,7 +52,6 @@ public class MainActivity extends AppCompatActivity {
                         Toast.makeText(getApplicationContext(), "Enter a port number", Toast.LENGTH_SHORT).show();
                         port_no.requestFocus();
                     } else {
-                        port_no.setEnabled(false);
                         int port = Integer.parseInt(port_no.getText().toString());
                         SharedPreferences.Editor editor = preferences.edit();
                         editor.putString("LastPort", String.valueOf(port));
@@ -61,8 +61,6 @@ public class MainActivity extends AppCompatActivity {
                         isRunning = true;
                     }
                 } else {
-                    port_no.setEnabled(true);
-                    getApplicationContext().stopService(serviceIntent);
                     isRunning = false;
                 }
                 setConnectionStatus();
@@ -105,9 +103,11 @@ public class MainActivity extends AppCompatActivity {
         if (!isRunning) {
             drawable = R.drawable.connection_off;
             connect.setText(R.string.button_status_off);
+            port_no.setEnabled(true);
         } else {
             drawable = R.drawable.connection_on;
             connect.setText(R.string.button_status_on);
+            port_no.setEnabled(false);
         }
 
         if (Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.JELLY_BEAN) {

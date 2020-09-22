@@ -55,7 +55,7 @@ public class InputService extends JobIntentService {
             editor.putBoolean("service_status", true);
             editor.apply();
 
-            while (true) {
+            while (MainActivity.isRunning) {
                 socket = serverSocket.accept();
                 dataInputStream = new DataInputStream(socket.getInputStream());
                 dataOutputStream = new DataOutputStream(socket.getOutputStream());
@@ -65,11 +65,13 @@ public class InputService extends JobIntentService {
                 messageFromClient = dataInputStream.readUTF();
 
                 performInput(messageFromClient);
+                Log.d(TAG, messageFromClient);
 
                 String msgReply = "Received";
                 dataOutputStream.writeUTF(msgReply);
 
             }
+            super.onDestroy();
         } catch (final IOException e) {
             e.printStackTrace();
         } finally {
@@ -99,13 +101,15 @@ public class InputService extends JobIntentService {
     }
 
     private void performInput(String input) {
-        if (!systemInput.contains(input)) {
-            Intent intent = new Intent();
-            intent.setAction("utv.uzitech.remote_input");
-            intent.putExtra("Remote_Input", input);
-            sendBroadcast(intent);
-        } else {
-            performSystemInput(input);
+        if(MainActivity.isRunning){
+            if (!systemInput.contains(input)) {
+                Intent intent = new Intent();
+                intent.setAction("utv.uzitech.remote_input");
+                intent.putExtra("Remote_Input", input);
+                sendBroadcast(intent);
+            } else {
+                performSystemInput(input);
+            }
         }
     }
 
@@ -120,4 +124,13 @@ public class InputService extends JobIntentService {
         }
     }
 
+    @Override
+    public void onDestroy() {
+        try {
+            serverSocket.close();
+        } catch (IOException e) {
+            Log.d(TAG, e.toString());
+        }
+        super.onDestroy();
+    }
 }
