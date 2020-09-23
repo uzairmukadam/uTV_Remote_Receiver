@@ -2,6 +2,7 @@ package com.uzitech.utvremotereceiver;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.Build;
 import android.os.PowerManager;
 import android.util.Log;
 
@@ -109,26 +110,28 @@ public class InputService extends JobIntentService {
     }
 
     private void performSystemInput(String input) {
-        if (input.equals("BTN_HOME")) {
-            Intent startMain = new Intent(Intent.ACTION_MAIN);
-            startMain.addCategory(Intent.CATEGORY_HOME);
-            startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-            startActivity(startMain);
-        } else if (input.equals("BTN_PWR")) {
-            turnOnScreen();
-        } else {
-            Log.d(TAG, input);
+        boolean isActive;
+        PowerManager pm = (PowerManager) getSystemService(Context.POWER_SERVICE);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT_WATCH) {
+            isActive = pm.isInteractive();
+        } else isActive = pm.isScreenOn();
+
+        if (input.equals("BTN_PWR")) {
+            PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+            PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK |
+                    PowerManager.ACQUIRE_CAUSES_WAKEUP |
+                    PowerManager.ON_AFTER_RELEASE, "appname::WakeLock");
+
+            wakeLock.acquire(1);
+            wakeLock.release();
+        } else if (isActive) {
+            if (input.equals("BTN_HOME")) {
+                Intent startMain = new Intent(Intent.ACTION_MAIN);
+                startMain.addCategory(Intent.CATEGORY_HOME);
+                startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                startActivity(startMain);
+            }
         }
-    }
-
-    void turnOnScreen() {
-        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
-        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK |
-                PowerManager.ACQUIRE_CAUSES_WAKEUP |
-                PowerManager.ON_AFTER_RELEASE, "appname::WakeLock");
-
-        wakeLock.acquire(1);
-        wakeLock.release();
     }
 
     @Override
