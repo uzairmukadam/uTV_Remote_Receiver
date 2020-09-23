@@ -2,6 +2,7 @@ package com.uzitech.utvremotereceiver;
 
 import android.content.Context;
 import android.content.Intent;
+import android.os.PowerManager;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
@@ -113,9 +114,21 @@ public class InputService extends JobIntentService {
             startMain.addCategory(Intent.CATEGORY_HOME);
             startMain.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             startActivity(startMain);
+        } else if (input.equals("BTN_PWR")) {
+            turnOnScreen();
         } else {
             Log.d(TAG, input);
         }
+    }
+
+    void turnOnScreen() {
+        PowerManager powerManager = (PowerManager) getApplicationContext().getSystemService(Context.POWER_SERVICE);
+        PowerManager.WakeLock wakeLock = powerManager.newWakeLock(PowerManager.FULL_WAKE_LOCK |
+                PowerManager.ACQUIRE_CAUSES_WAKEUP |
+                PowerManager.ON_AFTER_RELEASE, "appname::WakeLock");
+
+        wakeLock.acquire(1);
+        wakeLock.release();
     }
 
     @Override
